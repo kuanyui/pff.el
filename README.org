@@ -1,0 +1,14 @@
+* pff
+Project find-file.
+
+Like =projectile-find-file=, but no cache, no fuzzy search, so maybe more speedy.
+
+* Requirements
+- Ag
+- helm.el
+
+* Usage
+: M-x pff
+
+* License
+WTFPL 2.0
