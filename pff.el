@@ -7,9 +7,15 @@
 
 ;;; Code:
 
-(setq pff-limit 50)
+(defvar pff-candidates-limit 200)
+(defvar pff-recents-enabled t)
+(defvar pff-recents-limit 50)
+(defvar pff-recents nil)
 
-(defun pff-call-process-to-string (program &rest args)
+(defun pff-add-recents (path)
+  (setq pff-recents (cons path (remove path pff-recents))))
+
+(defun pff-call-process-to-string-list (program &rest args)
   "`shell-command-to-string' is too slow for simple task, so use this."
   (with-temp-buffer
     (apply #'call-process program (append '(nil t nil) args))
@@ -17,13 +23,20 @@
 
 (defun pff-get-candidates-list (str)
   (let ((default-directory (pff-pwd)))
-    (pff-call-process-to-string "ag" "-g" (shell-quote-argument str))))
+    (if pff-recents-enabled
+        (append pff-recents
+                (remove-if (lambda (path) (member path pff-recents))
+                           (if (> (length str) 0)
+                               (pff-call-process-to-string-list "ag" "-g" (shell-quote-argument str)))))
+      (pff-call-process-to-string-list "ag" "-g" (shell-quote-argument str)))))
 
 (defun pff-pwd ()
   (or (locate-dominating-file "." ".git") default-directory))
 
 (defun pff-find-file (relative-path)
-  (find-file (concat (pff-pwd) relative-path)))
+  (let ((abs-path (concat (pff-pwd) relative-path)))
+    (if pff-recents-enabled (pff-add-recents relative-path))
+    (find-file abs-path)))
 
 (defun pff ()
   (interactive)
@@ -31,8 +44,8 @@
                    :candidates (lambda () (pff-get-candidates-list helm-pattern))
                    :volatile t
                    :action #'pff-find-file
-                   :candidate-number-limit pff-limit
-                   :requires-pattern t)
+                   :candidate-number-limit pff-candidates-limit
+                   )
         :buffer "*pff*"
         :prompt "File name: "))
 
