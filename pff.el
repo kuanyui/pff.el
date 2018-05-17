@@ -14,7 +14,10 @@
 
 (defun pff-add-recent-file (path)
   (let* ((old-file-list (gethash (pff-pwd) pff-recents))
-         (new-file-list (cons path (remove path old-file-list))))
+         (new-file-list (progn
+                          (if (> (length old-file-list) pff-recents-limit)
+                              (setq old-file-list (butlast old-file-list)))
+                          (cons path (remove path old-file-list)))))
     (puthash (pff-pwd) new-file-list pff-recents)))
 
 (defun pff-get-recent-files ()
