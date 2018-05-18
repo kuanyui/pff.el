@@ -10,11 +10,18 @@
 (defvar pff-candidates-limit 200)
 (defvar pff-recents-enabled t)
 (defvar pff-recents-limit 50)
+
 (defvar pff-recents (make-hash-table :test 'equal))
 ;; (defvar-local pff--current-filepath "")
+(defun pff-get-buffer-files ()
+  (remove-if (lambda (file-path) (not (string-prefix-p (pff-project-root) file-path)))
+             (remove nil (mapcar #'buffer-file-name (buffer-list)))))
 
 (defun pff-project-root ()
-  (or (locate-dominating-file "." ".git") default-directory))
+  (let ((found (locate-dominating-file "." ".git")))
+    (if found
+        (expand-file-name found)
+      nil)))
 
 (defun pff-add-recent-file (path)
   (let* ((old-file-list (gethash (pff-project-root) pff-recents))
@@ -53,15 +60,19 @@
 
 (defun pff ()
   (interactive)
-  (let ((recent-files (pff-get-recent-files)))
-    (helm :sources (helm-build-sync-source "pff-sync"
-                     :candidates (lambda () (pff-get-candidates-list helm-pattern recent-files))
-                     :volatile t
-                     :action #'pff-find-file
-                     :candidate-number-limit pff-candidates-limit
-                     )
-          :buffer "*pff*"
-          :prompt "File name: ")))
+  (if (pff-project-root)
+      (let ((recent-files (pff-get-recent-files)))
+        (helm :sources (helm-build-sync-source "pff"
+                         :candidates (lambda () (pff-get-candidates-list helm-pattern recent-files))
+                         :volatile t
+                         :action #'pff-find-file
+                         :candidate-number-limit pff-candidates-limit
+                         :header-name (lambda (_) (format "Project: %s"
+                                                          (file-name-base (directory-file-name (pff-project-root)))))
+                         )
+              :buffer "*pff*"
+              :prompt "File name: "))
+    (message "Not in a project. Abort.")))
 
 (provide 'pff)
 ;;; pff.el ends here
