@@ -8,12 +8,14 @@
 ;;; Code:
 
 (defvar pff-candidates-limit 200)
-(defvar pff-recents-enabled t)
+(defvar pff-include-opened-buffers t)
+(defvar pff-include-recents t)
 (defvar pff-recents-limit 50)
 
 (defvar pff-recents (make-hash-table :test 'equal))
 ;; (defvar-local pff--current-filepath "")
 (defun pff-get-buffer-files ()
+  "Get opened buffers which are under the root of current project."
   (remove-if (lambda (file-path) (not (string-prefix-p (pff-project-root) file-path)))
              (remove nil (mapcar #'buffer-file-name (buffer-list)))))
 
@@ -46,7 +48,7 @@
 
 (defun pff-get-candidates-list (str &optional recent-file-list)
   (let ((default-directory (pff-project-root)))
-    (if pff-recents-enabled
+    (if pff-include-recents
         (append recent-file-list
                 (remove-if (lambda (path) (member path recent-file-list))
                            (if (> (length str) 0)
@@ -55,7 +57,7 @@
 
 (defun pff-find-file (relative-path)
   (let ((abs-path (concat (pff-project-root) relative-path)))
-    (if pff-recents-enabled (pff-add-recent-file relative-path))
+    (if pff-include-recents (pff-add-recent-file relative-path))
     (find-file abs-path)))
 
 (defun pff ()
