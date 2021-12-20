@@ -60,6 +60,7 @@
     (if pff-recents-enable (pff-add-recent-file relative-path))
     (find-file abs-path)))
 
+;;;###autoload
 (defun pff ()
   (interactive)
   (if (pff-project-root)
