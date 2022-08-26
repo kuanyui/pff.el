@@ -52,8 +52,8 @@
         (append recent-file-list
                 (remove-if (lambda (path) (member path recent-file-list))
                            (if (> (length str) 0)
-                               (pff-call-process-to-string-list "ag" "-g" (shell-quote-argument str)))))
-      (pff-call-process-to-string-list "ag" "-g" (shell-quote-argument str)))))
+                               (pff-call-process-to-string-list "ag" "--hidden" "-g" (shell-quote-argument str)))))
+      (pff-call-process-to-string-list "ag" "--hidden" "-g" (shell-quote-argument str)))))
 
 (defun pff-find-file (relative-path)
   (let ((abs-path (concat (pff-project-root) relative-path)))
