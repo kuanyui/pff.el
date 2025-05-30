@@ -44,21 +44,32 @@
   "`shell-command-to-string' is too slow for simple task, so use this."
   (with-temp-buffer
     (apply #'call-process program (append '(nil t nil) args))
-    (split-string (buffer-string) "\n")))
+    (cl-remove-if #'string-empty-p (split-string (buffer-string) "\n"))))
+
+(defun pff-execute-backend-to-get-file-list (pattern)
+  (cond
+   ;;((executable-find "rg")
+   ;;(pff-call-process-to-string-list "rg" "--hidden" "--files" "--glob" (shell-quote-wildcard-pattern pattern)))
+   ((executable-find "ag")
+    (pff-call-process-to-string-list "ag" "--hidden" "--filename-pattern" (shell-quote-argument pattern)))
+   ((executable-find "find")
+    (pff-call-process-to-string-list "find" (shell-quote-argument (pff-project-root)) "-type" "f" "-name" (shell-quote-wildcard-pattern (format "*%s*" pattern))))))
 
 (defun pff-get-candidates-list (str &optional recent-file-list)
   (let ((default-directory (pff-project-root)))
     (if pff-recents-enable
-        (append recent-file-list
-                (remove-if (lambda (path) (member path recent-file-list))
+	(append recent-file-list
+		(remove-if (lambda (path) (member path recent-file-list))
                            (if (> (length str) 0)
-                               (pff-call-process-to-string-list "ag" "--hidden" "--ignore" ".git/" "--filename-pattern" (shell-quote-argument str)))))
-      (pff-call-process-to-string-list "ag" "--hidden" "--filename-pattern" (shell-quote-argument str)))))
+                               (pff-execute-backend-to-get-file-list str))))
+      (pff-execute-backend-to-get-file-list str))))
 
 (defun pff-find-file (relative-path)
   (let ((abs-path (concat (pff-project-root) relative-path)))
     (if pff-recents-enable (pff-add-recent-file relative-path))
     (find-file abs-path)))
+
+
 
 ;;;###autoload
 (defun pff ()
