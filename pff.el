@@ -64,9 +64,11 @@
                                (pff-execute-backend-to-get-file-list str))))
       (pff-execute-backend-to-get-file-list str))))
 
-(defun pff-find-file (relative-path)
-  (let ((abs-path (concat (pff-project-root) relative-path)))
-    (if pff-recents-enable (pff-add-recent-file relative-path))
+(defun pff-find-file (fpath)
+  (let ((abs-path (if (file-name-absolute-p fpath)
+		      fpath
+		    (concat (pff-project-root) fpath))))
+    (if pff-recents-enable (pff-add-recent-file fpath))
     (find-file abs-path)))
 
 
